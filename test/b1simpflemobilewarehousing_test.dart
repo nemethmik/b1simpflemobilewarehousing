@@ -1,16 +1,353 @@
+import 'dart:convert';
 import 'package:b1simpflemobilewarehousing/b1simpflemobilewarehousing.dart';
 import 'package:test/test.dart';
-
+import 'defaultconnection.dart' as conf;
 void main() {
-  group('A group of tests', () {
-    Awesome awesome;
-
-    setUp(() {
-      awesome = Awesome();
+  group('Basic tests of B1ServiceLayer', () {
+    var awesome = B1ServiceLayer(conf.connection);
+    setUp(() async {
+      await awesome.loginAsync();
     });
-
-    test('First Test', () {
-      expect(awesome.isAwesome, isTrue);
+    test('Get First Activity', () async {
+      // String activityJson = await awesome.queryAsync("Activities(1)");
+      // expect(activityJson.isNotEmpty, isTrue);
+      // print(activityJson);
+      String activityJson = _sampleActivityJson;
+      Map<String,dynamic> activityMap = json.decode(activityJson);
+      //activityMap.forEach((k,v){print("$k = $v");});
+      print("Number of null fields is ${(){int counter = 0; activityMap.forEach((k,v){if(v == null) counter++;});  return counter;}()}");
+      activityMap.removeWhere((k,v)=> v == null);
+      print("Number of null fields is ${(){int counter = 0; activityMap.forEach((k,v){if(v == null) counter++;});  return counter;}()}");
+      print("Number of non null fields is ${(){int counter = 0; activityMap.forEach((k,v){if(v != null) counter++;});  return counter;}()}");
+      Activity activityObject = Activity.fromJson(activityJson);
+      //activityObject.forEach((k,v){print("$k = $v");});
+      int ac = activityObject.activityCode;
+      activityObject.activityCode = 999;
+      DateTime dt = activityObject.startDate;
+      activityObject.startDate = DateTime.now();
+      //print(activityObject.toJson());
+      activityObject.activityCode = 888;
+      print("Current value ${activityObject.activityCode} Original value ${activityObject.originalValue(Activity.ActivityCode)} dirty ${activityObject.isDirty(Activity.ActivityCode)}");
+      activityObject.activityCode = 1;
+      print("Current value ${activityObject.activityCode} Original value ${activityObject.originalValue(Activity.ActivityCode)} dirty ${activityObject.isDirty(Activity.ActivityCode)}");
+      print("Update ${activityObject.toUpdateJson()}");
+      var activityKind = activityObject.activity;
+      activityObject.activity = BoActivities.cn_Note;
+      print("Current value ${activityObject.activity} Original value ${activityObject.originalValue(Activity.Activity_)} dirty ${activityObject.isDirty(Activity.Activity_)}");
+      print("Update ${activityObject.toUpdateJson()}");
+    });
+    test('Activity List Parsing Test',() async {
+      // List<Activity> activityList = Activity.fromValue(_sampleActivityListJson);
+      List<Activity> activityList = Activity.fromValue(await awesome.queryAsync("Activities"));
+      expect(activityList.isNotEmpty,isTrue);
+      activityList.forEach((a){
+        print("${a.activityCode} ${a.closed} ${a.activity}");
+      });
     });
   });
 }
+
+
+String _sampleActivityJson = """
+{
+    "odata.metadata": "http://hana93srv:50001/b1s/v1/\$metadata#Activities/@Element",
+    "ActivityCode": 1,
+    "CardCode": "C20000",
+    "Notes": "",
+    "ActivityDate": "2016-08-02",
+    "ActivityTime": "02:44:00",
+    "StartDate": "2016-07-25",
+    "Closed": "tNO",
+    "CloseDate": null,
+    "Phone": "555-0137",
+    "Fax": null,
+    "Subject": -1,
+    "DocType": "-1",
+    "DocNum": null,
+    "DocEntry": null,
+    "Priority": "pr_Normal",
+    "Details": "Prepare execution meeting",
+    "Activity": "cn_Conversation",
+    "ActivityType": -1,
+    "Location": -1,
+    "StartTime": "02:44:00",
+    "EndTime": "02:59:00",
+    "Duration": 15.0,
+    "DurationType": "du_Minuts",
+    "SalesEmployee": 1,
+    "ContactPersonCode": 1,
+    "HandledBy": 1,
+    "Reminder": "tNO",
+    "ReminderPeriod": 15.0,
+    "ReminderType": "du_Minuts",
+    "City": null,
+    "PersonalFlag": "tNO",
+    "Street": null,
+    "ParentObjectId": null,
+    "ParentObjectType": null,
+    "Room": null,
+    "InactiveFlag": "tNO",
+    "State": null,
+    "PreviousActivity": null,
+    "Country": null,
+    "Status": null,
+    "TentativeFlag": "tNO",
+    "EndDueDate": "2016-07-25",
+    "DocTypeEx": "-1",
+    "AttachmentEntry": null,
+    "RecurrencePattern": "rpNone",
+    "EndType": "etNoEndDate",
+    "SeriesStartDate": "2016-08-02",
+    "SeriesEndDate": null,
+    "MaxOccurrence": null,
+    "Interval": 1,
+    "Sunday": "tNO",
+    "Monday": "tNO",
+    "Tuesday": "tNO",
+    "Wednesday": "tNO",
+    "Thursday": "tNO",
+    "Friday": "tNO",
+    "Saturday": "tNO",
+    "RepeatOption": "roByDate",
+    "BelongedSeriesNum": null,
+    "IsRemoved": "tNO",
+    "AddressName": null,
+    "AddressType": "bo_ShipTo",
+    "HandledByEmployee": null,
+    "RecurrenceSequenceSpecifier": null,
+    "RecurrenceDayInMonth": null,
+    "RecurrenceMonth": null,
+    "RecurrenceDayOfWeek": null,
+    "SalesOpportunityId": null,
+    "SalesOpportunityLine": null,
+    "HandledByRecipientList": null,
+    "CheckInListParams": []
+ }
+""";
+
+String _sampleActivityListJson = """
+{
+   "odata.metadata": "http://hana93srv:50001/b1s/v1/\$metadata#Activities",
+   "value": [
+      {
+         "ActivityCode": 1,
+         "CardCode": "C20000",
+         "Notes": "",
+         "ActivityDate": "2016-08-02",
+         "ActivityTime": "02:44:00",
+         "StartDate": "2016-07-25",
+         "Closed": "tNO",
+         "CloseDate": null,
+         "Phone": "555-0137",
+         "Fax": null,
+         "Subject": -1,
+         "DocType": "-1",
+         "DocNum": null,
+         "DocEntry": null,
+         "Priority": "pr_Normal",
+         "Details": "Prepare execution meeting",
+         "Activity": "cn_Conversation",
+         "ActivityType": -1,
+         "Location": -1,
+         "StartTime": "02:44:00",
+         "EndTime": "02:59:00",
+         "Duration": 15.0,
+         "DurationType": "du_Minuts",
+         "SalesEmployee": 1,
+         "ContactPersonCode": 1,
+         "HandledBy": 1,
+         "Reminder": "tNO",
+         "ReminderPeriod": 15.0,
+         "ReminderType": "du_Minuts",
+         "City": null,
+         "PersonalFlag": "tNO",
+         "Street": null,
+         "ParentObjectId": null,
+         "ParentObjectType": null,
+         "Room": null,
+         "InactiveFlag": "tNO",
+         "State": null,
+         "PreviousActivity": null,
+         "Country": null,
+         "Status": null,
+         "TentativeFlag": "tNO",
+         "EndDueDate": "2016-07-25",
+         "DocTypeEx": "-1",
+         "AttachmentEntry": null,
+         "RecurrencePattern": "rpNone",
+         "EndType": "etNoEndDate",
+         "SeriesStartDate": "2016-08-02",
+         "SeriesEndDate": null,
+         "MaxOccurrence": null,
+         "Interval": 1,
+         "Sunday": "tNO",
+         "Monday": "tNO",
+         "Tuesday": "tNO",
+         "Wednesday": "tNO",
+         "Thursday": "tNO",
+         "Friday": "tNO",
+         "Saturday": "tNO",
+         "RepeatOption": "roByDate",
+         "BelongedSeriesNum": null,
+         "IsRemoved": "tNO",
+         "AddressName": null,
+         "AddressType": "bo_ShipTo",
+         "HandledByEmployee": null,
+         "RecurrenceSequenceSpecifier": null,
+         "RecurrenceDayInMonth": null,
+         "RecurrenceMonth": null,
+         "RecurrenceDayOfWeek": null,
+         "SalesOpportunityId": null,
+         "SalesOpportunityLine": null,
+         "HandledByRecipientList": null,
+         "CheckInListParams": []
+      },
+      {
+         "ActivityCode": 3,
+         "CardCode": "C20000",
+         "Notes": null,
+         "ActivityDate": "2019-08-03",
+         "ActivityTime": "11:08:00",
+         "StartDate": "2019-08-03",
+         "Closed": "tNO",
+         "CloseDate": null,
+         "Phone": "555-0137",
+         "Fax": null,
+         "Subject": -1,
+         "DocType": "202",
+         "DocNum": "154",
+         "DocEntry": "154",
+         "Priority": "pr_Normal",
+         "Details": "Adjust due date, release and schedule ASAP",
+         "Activity": "cn_Task",
+         "ActivityType": -1,
+         "Location": -1,
+         "StartTime": "11:08:00",
+         "EndTime": "11:23:00",
+         "Duration": 900.0,
+         "DurationType": "du_Seconds",
+         "SalesEmployee": 1,
+         "ContactPersonCode": 1,
+         "HandledBy": 1,
+         "Reminder": "tNO",
+         "ReminderPeriod": 15.0,
+         "ReminderType": "du_Minuts",
+         "City": null,
+         "PersonalFlag": "tNO",
+         "Street": null,
+         "ParentObjectId": null,
+         "ParentObjectType": null,
+         "Room": null,
+         "InactiveFlag": "tNO",
+         "State": null,
+         "PreviousActivity": null,
+         "Country": null,
+         "Status": -2,
+         "TentativeFlag": "tNO",
+         "EndDueDate": "2019-08-03",
+         "DocTypeEx": "202",
+         "AttachmentEntry": null,
+         "RecurrencePattern": "rpNone",
+         "EndType": "etNoEndDate",
+         "SeriesStartDate": "2019-08-03",
+         "SeriesEndDate": null,
+         "MaxOccurrence": null,
+         "Interval": 1,
+         "Sunday": "tNO",
+         "Monday": "tNO",
+         "Tuesday": "tNO",
+         "Wednesday": "tNO",
+         "Thursday": "tNO",
+         "Friday": "tNO",
+         "Saturday": "tNO",
+         "RepeatOption": "roByDate",
+         "BelongedSeriesNum": null,
+         "IsRemoved": "tNO",
+         "AddressName": null,
+         "AddressType": "bo_ShipTo",
+         "HandledByEmployee": null,
+         "RecurrenceSequenceSpecifier": null,
+         "RecurrenceDayInMonth": null,
+         "RecurrenceMonth": null,
+         "RecurrenceDayOfWeek": null,
+         "SalesOpportunityId": null,
+         "SalesOpportunityLine": null,
+         "HandledByRecipientList": null,
+         "CheckInListParams": []
+      },
+      {
+         "ActivityCode": 4,
+         "CardCode": "",
+         "Notes": null,
+         "ActivityDate": "2019-08-03",
+         "ActivityTime": "11:10:00",
+         "StartDate": "2019-08-04",
+         "Closed": "tNO",
+         "CloseDate": null,
+         "Phone": null,
+         "Fax": null,
+         "Subject": -1,
+         "DocType": "202",
+         "DocNum": "153",
+         "DocEntry": "153",
+         "Priority": "pr_Normal",
+         "Details": "This is a task activity without customer",
+         "Activity": "cn_Task",
+         "ActivityType": -1,
+         "Location": -1,
+         "StartTime": "13:00:00",
+         "EndTime": "13:15:00",
+         "Duration": 900.0,
+         "DurationType": "du_Seconds",
+         "SalesEmployee": -1,
+         "ContactPersonCode": null,
+         "HandledBy": 1,
+         "Reminder": "tNO",
+         "ReminderPeriod": 15.0,
+         "ReminderType": "du_Minuts",
+         "City": null,
+         "PersonalFlag": "tNO",
+         "Street": null,
+         "ParentObjectId": null,
+         "ParentObjectType": null,
+         "Room": null,
+         "InactiveFlag": "tNO",
+         "State": null,
+         "PreviousActivity": null,
+         "Country": null,
+         "Status": -2,
+         "TentativeFlag": "tNO",
+         "EndDueDate": "2019-08-04",
+         "DocTypeEx": "202",
+         "AttachmentEntry": null,
+         "RecurrencePattern": "rpNone",
+         "EndType": "etNoEndDate",
+         "SeriesStartDate": "2019-08-04",
+         "SeriesEndDate": null,
+         "MaxOccurrence": null,
+         "Interval": 1,
+         "Sunday": "tNO",
+         "Monday": "tNO",
+         "Tuesday": "tNO",
+         "Wednesday": "tNO",
+         "Thursday": "tNO",
+         "Friday": "tNO",
+         "Saturday": "tNO",
+         "RepeatOption": "roByDate",
+         "BelongedSeriesNum": null,
+         "IsRemoved": "tNO",
+         "AddressName": null,
+         "AddressType": "bo_ShipTo",
+         "HandledByEmployee": null,
+         "RecurrenceSequenceSpecifier": null,
+         "RecurrenceDayInMonth": null,
+         "RecurrenceMonth": null,
+         "RecurrenceDayOfWeek": null,
+         "SalesOpportunityId": null,
+         "SalesOpportunityLine": null,
+         "HandledByRecipientList": null,
+         "CheckInListParams": []
+      }
+   ]
+}
+""";
